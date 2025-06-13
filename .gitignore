@@ -1,8 +1,10 @@
+.DS_Store
 .terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
 lib/
 bin/
 include/
 .terraform/
 utilities/sendimage
-.DS_Store
 utilities/Test.pxd
