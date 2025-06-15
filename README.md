@@ -14,4 +14,6 @@ ChangeLog
 * Created a test image in jpeg format
 * Created python lambda code to handle post request
 * Create Lambda terraform code
-
+* Create API Gateway
+* Create Add Lambda Integration
+* 
