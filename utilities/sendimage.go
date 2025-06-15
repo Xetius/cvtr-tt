@@ -10,7 +10,9 @@ import (
 	"os"
 )
 
-const targetURL = "http://myurl" // Replace with your actual target URL
+const (
+	targetURL = "https://fy0ziio70a.execute-api.eu-west-2.amazonaws.com/upload" // Replace with your actual target URL
+)
 
 type ImagePayload struct {
 	Filename string `json:"filename"`
@@ -47,21 +49,28 @@ func main() {
 		return
 	}
 
-	// Send POST request
-	resp, err := http.Post(targetURL, "application/json", bytes.NewBuffer(jsonData))
+	// Build custom HTTP request
+	req, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Printf("HTTP request error: %v\n", err)
+		fmt.Printf("Error creating request: %v\n", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error making request: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	// Read and display the response
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Error reading response: %v\n", err)
 		return
 	}
-
 	fmt.Printf("Response status: %s\n", resp.Status)
 	fmt.Printf("Response body: %s\n", string(body))
 }

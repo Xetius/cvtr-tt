@@ -12,3 +12,6 @@ ChangeLog
 * Create routing table and association
 * Added a utility to encode in base64 and send it via HTTP POST to a URL
 * Created a test image in jpeg format
+* Created python lambda code to handle post request
+* Create Lambda terraform code
+

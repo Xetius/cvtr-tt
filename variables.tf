@@ -17,3 +17,13 @@ variable "bucket_name" {
   type    = string
   default = "xetius-convertr-image-bucket"
 }
+
+variable "api_name" {
+  type    = string
+  default = "upload_lambda"
+}
+
+variable "stage" {
+  type    = string
+  default = "upload"
+}

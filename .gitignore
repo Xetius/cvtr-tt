@@ -8,4 +8,4 @@ include/
 .terraform/
 utilities/sendimage
 utilities/Test.pxd
-lambda.zip
+*.zip
