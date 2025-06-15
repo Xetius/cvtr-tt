@@ -8,7 +8,6 @@ Assumptions:
 * A S3 bucket is used to store the images
 * A Lambda (in Python) is used to receive POST data containing the image and other information, and reconstructs the image file and writes it to the S3 storage.
 * API Gateway uses Lambda Integration to expose an endpoint and pass the data to the Lambda.
-* A private VPC exists.
 
 # Details
 * Created a utility in Go that takes a local jpg file, and creates the following data Structure
@@ -58,7 +57,8 @@ However, I cannot remember how to send the POST without any authentication, and 
 
 I tried creating an Authorizer that responds with a 200, but it appears to be a requirement that the request is signed with AWS Signature V4, which I have not done before, and have unfortunately ran out of time while still researching this.  I have not used this before, but given more time I would have worked out how to do this.
 
-Given more time, I would probably not have created the VPC as I don't believe it is required.
+Update:
+After further meddling, this is no longer working.
 
 # TODO
 Given more time I would do the following:

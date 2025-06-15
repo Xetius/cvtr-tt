@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	targetURL = "https://fy0ziio70a.execute-api.eu-west-2.amazonaws.com/upload" // Replace with your actual target URL
+	targetURL = "https://e3prssusu0.execute-api.eu-west-2.amazonaws.com/upload" // Replace with your actual target URL
 )
 
 type ImagePayload struct {

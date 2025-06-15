@@ -14,9 +14,9 @@ resource "aws_iam_role" "lambda_exec_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_exec" {
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 resource "aws_iam_role_policy" "s3_upload" {
@@ -25,9 +25,9 @@ resource "aws_iam_role_policy" "s3_upload" {
     Version = "2012-10-17"
     Statement = [{
       Action = [
-        "s3:PutObject"
+        "s3:PutObject", "s3:GetObject", "s3:ListBucket",
       ]
-      Effect   = "Allow"
+      Effect   = "Allow",
       Resource = "*"
     }]
   })

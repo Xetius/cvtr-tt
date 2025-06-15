@@ -10,6 +10,7 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+
 resource "aws_subnet" "private" {
   count                   = length(var.private_subnet_cidrs)
   vpc_id                  = aws_vpc.main.id
@@ -35,3 +36,5 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
+
+
