@@ -10,12 +10,13 @@ Assumptions:
 * API Gateway uses Lambda Integration to expose an endpoint and pass the data to the Lambda.
 
 # Details
-* Created a utility in Go that takes a local jpg file, and creates the following data Structure
+* Created a utility in Go that takes a local image file, and creates the following data Structure
 ```
 
 {
   "filename": <filename>,
-  "content": <base64 encoded contents of file>
+  "content": <base64 encoded contents of file>,
+  "filetype": <content type>
 }
 
 ```
@@ -25,6 +26,7 @@ Assumptions:
 * The Python Lambda does the following:
   * Extracts the filename from the json structure.
   * Extracts the base64 encoded contents from the JSON structure.
+  * Extracts the content-type of the image from the JSON structure.
   * Creates a byte array by decoding the base64 contents.
   * Create a unique filename by prepending a uuid to the filename.
   * Write the byte array to S3 with the new unique filename
@@ -41,34 +43,36 @@ go build sendimage.go
 ```
 This will create the `sendimage` binary.  This will take the jpg image filename and post it to the API endpoint.
 
+## Deploy AWS Infrastructure
 To deploy the AWS infrastructure, run the following from the root of the git repository:
 ```
 terraform init
 terraform plan
 terraform apply
+export IMAGE_UPLOAD_URL$=(terraform output -raw upload-endpoint)
 ```
 
+The final export line creates the environment variable that the sendimage executable uses to obtain the URL to sent the image to.
+
+## Uploading an image
+Execute the sendimage binary.
+```
+cd utilities
+./sendimage test.jpg
+
+```
+You can also move the sendimage binary to somewhere in your current path.
+
+This will upload the image to the S3 storage.
+
+The content type is automatically detected and applied.  This is also passed as part of the post data.
+
 # Conclusion
-Unfortunately this is currently not working.  
-
-I have tested this from the API Gateway and the Lambda integration and Lambda code are working correctly.
-
-However, I cannot remember how to send the POST without any authentication, and didn't find the right documentation for how to do this.  Also, I don't think that zero authorisation is a great idea for a service like this.
-
-I tried creating an Authorizer that responds with a 200, but it appears to be a requirement that the request is signed with AWS Signature V4, which I have not done before, and have unfortunately ran out of time while still researching this.  I have not used this before, but given more time I would have worked out how to do this.
-
-Update:
-After further meddling, this is no longer working.
 
 # TODO
 Given more time I would do the following:
-* Fix the authentication issue
-* Add handling for multiple image file types (jpeg, png, bmp, gif etc.)
 * Probably create user accounts using Cognito and link this to the authorisation using API keys
 * Provide automation for AWS infrastructure deployment and updates.  This would be fairly simple using either GitHub Actions (as the code is in GitHub currently) or Code Build.
-* Change the hardcoded bucket name in the s3 code and the API gateway endpoint used in the sendimage utility.
-  * Theoretically could generate a random bucket name or partially random bucket name for the S3 bucket
-  * Could either retrieve the API endpoint from the terraform output or add code to query API gateway via the SDK
 
 ChangeLog
 * Configure AWS provider.  Using latest release version (5.99.1)

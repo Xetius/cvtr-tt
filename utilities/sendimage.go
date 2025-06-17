@@ -10,16 +10,19 @@ import (
 	"os"
 )
 
-const (
-	targetURL = "https://e3prssusu0.execute-api.eu-west-2.amazonaws.com/upload" // Replace with your actual target URL
-)
-
 type ImagePayload struct {
 	Filename string `json:"filename"`
-	Content  string `json:"content"` // base64-encoded
+	Content  string `json:"content"`
+	FileType string `json:"filetype"`
 }
 
 func main() {
+	targetURL := os.Getenv("IMAGE_UPLOAD_URL")
+	if targetURL == "" {
+		fmt.Println("Error: TARGET_URL environment variable is not set.")
+		return
+	}
+
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: sendimage <image_filename>")
 		return
@@ -27,20 +30,21 @@ func main() {
 
 	filename := os.Args[1]
 
-	// Read the image file
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Printf("Error reading file %s: %v\n", filename, err)
 		return
 	}
 
-	// Encode the image to base64
+	fileType := http.DetectContentType(data[:512])
+	fmt.Println("filetype: ", fileType)
+
 	encoded := base64.StdEncoding.EncodeToString(data)
 
-	// Prepare the payload
 	payload := ImagePayload{
 		Filename: filename,
 		Content:  encoded,
+		FileType: fileType,
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -49,7 +53,6 @@ func main() {
 		return
 	}
 
-	// Build custom HTTP request
 	req, err := http.NewRequest("POST", targetURL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Printf("Error creating request: %v\n", err)

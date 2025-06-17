@@ -3,7 +3,6 @@ import json
 import boto3
 import os
 import uuid
-import logging
 
 s3 = boto3.client("s3")
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "")
@@ -11,26 +10,26 @@ BUCKET_NAME = os.environ.get("BUCKET_NAME", "")
 
 def lambda_handler(event, context):
     try:
-        logger = logging.getLogger()
-        logger.setLevel("INFO")
+        if event.get("isBase64Encoded"):
+            body_bytes = base64.b64decode(event["body"])
+        else:
+            body_bytes = event["body"].encode("utf-8")
 
-        body = json.loads(event.get("body", "{}"))
-        filename = body.get("filename")
+        body = json.loads(body_bytes)
+        filename = os.path.basename(body.get("filename"))
         content = body.get("content")
-
-        logger.debug(f"filename: {filename}")
-        logger.debug(f"content: {content}")
+        filetype = body.get("filetype")
 
         if not filename:
             return {
                 "statusCode": 400,
-                "body": json.dumps({"error", "Missing filename"}),
+                "body": json.dumps({"error": "Missing filename", "received": event}),
             }
 
         if not content:
             return {
                 "statusCode": 400,
-                "body": json.dumps({"error", "Missing image data"}),
+                "body": json.dumps({"error": "Missing image data", "received": event}),
             }
 
         image_bytes = base64.b64decode(content)
@@ -40,7 +39,7 @@ def lambda_handler(event, context):
             Bucket=BUCKET_NAME,
             Key=target_filename,
             Body=image_bytes,
-            ContentType="image/jpeg",
+            ContentType=filetype,
         )
 
         return {
@@ -50,4 +49,7 @@ def lambda_handler(event, context):
             ),
         }
     except Exception as e:
-        return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e), "received": event}),
+        }

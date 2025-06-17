@@ -1,78 +1,32 @@
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "lambda_exec_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      },
-      Effect = "Allow",
-      Sid    = ""
-    }]
-  })
+resource "aws_apigatewayv2_api" "http_api" {
+  name          = "upload-image"
+  protocol_type = "HTTP"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_basic" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id                 = aws_apigatewayv2_api.http_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.upload_lambda.invoke_arn
+  integration_method     = "POST"
+  payload_format_version = "2.0"
 }
 
-resource "aws_iam_role_policy" "s3_upload" {
-  role = aws_iam_role.lambda_exec_role.name
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = [
-        "s3:PutObject", "s3:GetObject", "s3:ListBucket",
-      ]
-      Effect   = "Allow",
-      Resource = "*"
-    }]
-  })
+resource "aws_apigatewayv2_route" "post_submit" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /${var.image_upload_route}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
-resource "aws_api_gateway_rest_api" "api" {
-  name = var.api_name
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.http_api.id
+  name        = "$default"
+  auto_deploy = true
 }
 
-resource "aws_api_gateway_resource" "proxy" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "{proxy+}"
+resource "aws_lambda_permission" "allow_api_gateway" {
+  statement_id  = "AllowExecutionFromHTTPAPI"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.upload_lambda.arn
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*"
 }
-
-resource "aws_api_gateway_method" "proxy_method" {
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.proxy.id
-  http_method   = "ANY"
-  authorization = "NONE"
-}
-
-resource "aws_api_gateway_integration" "proxy_integration" {
-  rest_api_id             = aws_api_gateway_rest_api.api.id
-  resource_id             = aws_api_gateway_resource.proxy.id
-  http_method             = aws_api_gateway_method.proxy_method.http_method
-  type                    = "AWS_PROXY"
-  integration_http_method = "POST"
-  uri                     = aws_lambda_function.upload_lambda.invoke_arn
-}
-
-resource "aws_api_gateway_deployment" "api_deployment" {
-  depends_on = [
-    aws_api_gateway_method.proxy_method,
-    aws_api_gateway_integration.proxy_integration,
-  ]
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_api_gateway_stage" "api_stage" {
-  stage_name    = var.stage
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  deployment_id = aws_api_gateway_deployment.api_deployment.id
-}
-
